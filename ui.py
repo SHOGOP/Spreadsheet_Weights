@@ -55,14 +55,14 @@ class Window(QtWidgets.QWidget):
         self.layout().addWidget(self.line1, ui_row, 0)
 
         self.mode_button = []
-        mode_button_value = ["ShowAll:OFF", "Hilight:OFF", "Focus:OFF", "Mirror"]
+        mode_button_value = ["ShowAll", "Hilight:OFF", "Focus:OFF"]
         # モードボタン配置
-
+        self.mode_button_group = QtWidgets.QButtonGroup()
         for i, button in enumerate(mode_button_value):
             self.mode_button.append(QtWidgets.QPushButton(str(button)))
             self.mode_button[i].setCheckable(True)
             self.layout().addWidget(self.mode_button[i], ui_row, i + 1)
-
+            self.mode_button_group.addButton(self.mode_button[i], i)
         # ウェイトボタン生成
         ui_row = 1
 
@@ -83,6 +83,7 @@ class Window(QtWidgets.QWidget):
         for i, button in enumerate(weight_button_value):
             self.weight_button.append(QtWidgets.QPushButton(str(button)))
             self.weight_button[i].setCheckable(True)
+            self.weight_button[i].setDown(False)
             self.layout().addWidget(self.weight_button[i], ui_row, i)
         # スライダー関連
         ui_row = 2
@@ -210,9 +211,12 @@ class Window(QtWidgets.QWidget):
 
     def select_vertex_release(self):
         window = bpy.context.window_manager.windows[0]
+        PAINT_WEIGHT_FLG = False
         with bpy.context.temp_override(window=window):
             if bpy.context.mode == "OBJECT":
                 return
+            if bpy.context.mode == "PAINT_WEIGHT":
+                PAINT_WEIGHT_FLG = True
             # 現在アクティブなオブジェクトを取得
             obj = bpy.context.active_object
             # 編集モードに切り替え
@@ -220,17 +224,24 @@ class Window(QtWidgets.QWidget):
             bpy.ops.mesh.select_all(action="DESELECT")  # 頂点を全選択
             # ビューポートを更新するために一時的にオブジェクトモードに切り替える
             bpy.ops.object.mode_set(mode="OBJECT")
-            bpy.ops.object.mode_set(mode="EDIT")
+            if PAINT_WEIGHT_FLG:
+                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+            else:
+                bpy.ops.object.mode_set(mode="EDIT")
 
     def select_vertex(self, index=None):
+        print("select_vertex")
         self.select_vertex_release()
 
         if index == None:
             return
+        PAINT_WEIGHT_FLG = False
         window = bpy.context.window_manager.windows[0]
         with bpy.context.temp_override(window=window):
             if bpy.context.mode == "OBJECT":
                 return
+            if bpy.context.mode == "PAINT_WEIGHT":
+                PAINT_WEIGHT_FLG = True
             # 現在アクティブなオブジェクトを取得
             obj = bpy.context.active_object
             # 編集モードに切り替え
@@ -244,15 +255,20 @@ class Window(QtWidgets.QWidget):
             bmesh.update_edit_mesh(me)
             # ビューポートを更新するために一時的にオブジェクトモードに切り替える
             bpy.ops.object.mode_set(mode="OBJECT")
-            bpy.ops.object.mode_set(mode="EDIT")
+            if PAINT_WEIGHT_FLG:
+                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+            else:
+                bpy.ops.object.mode_set(mode="EDIT")
 
     def clicked_mode_button(self):
+        check_id = self.mode_button_group.checkedId()
+        buttons = self.mode_button_group.buttons()
         logger.info("tb: %s", "".join(traceback.format_stack()))
         print("clicked_mode_button")
         object_cls = self.object_cls
         sender = self.sender()
         text = sender.text()
-        self.select_vertex()
+        # self.select_vertex()
         if text == "Mirror":
             self.mirror_vertex_group()
             pass
@@ -260,32 +276,52 @@ class Window(QtWidgets.QWidget):
             self.mode_button[i].setText(
                 self.mode_button[i].text().replace(":ON", ":OFF")
             )
-
+        if check_id == 0:
+            # ShowAllを押した場合
+            if self.show_all_mode:
+                self.show_all_mode = False
+                buttons[0].setDown(False)
+            else:
+                self.show_all_mode = True
+                buttons[0].setDown(True)
+            self.table_filter()
+            return
+        elif check_id == 1:
+            # Hilightを押した場合
+            if self.hilight_mode:
+                self.hilight_mode = False
+                buttons[1].setDown(False)
+                self.table_filter()
+            else:
+                self.hilight_mode = True
+                buttons[1].setDown(True)
+                self.focus_mode = False
+                buttons[1].setDown(False)
+            self.table_filter()
+            return
         self.hilight_mode = False
         self.focus_mode = False
         if text == "Hilight:ON":
             self.hilight_mode = False
+            sender.setDown(False)
             sender.setText("Hilight:OFF")
             self.table_filter()
         elif text == "Hilight:OFF":
             self.hilight_mode = True
+            sender.setDown(True)
             sender.setText("Hilight:ON")
             self.table_filter()
         elif text == "Focus:OFF":
             self.focus_mode = True
+            sender.setDown(True)
             sender.setText("Focus:ON")
+            self.table_filter()
         elif text == "Focus:ON":
             self.focus_mode = False
+            sender.setDown(False)
             self.select_button_click = True
             sender.setText("Focus:OFF")
-        elif text == "ShowAll:OFF":
-            self.show_all_mode = True
-            sender.setText("ShowAll:ON")
-            # self.set_table(object_cls)
-        elif text == "ShowAll:ON":
-            self.show_all_mode = False
-            sender.setText("ShowAll:OFF")
-            # self.set_table(object_cls)
+            self.table_filter()
 
     def select_table_item(self, item):
         print("Clicked!")
@@ -385,6 +421,9 @@ class Window(QtWidgets.QWidget):
                         pass
                 else:
                     filter_group.remove(idx)
+        else:
+            filter_group = object_cls.vertex_groups_name()
+
         self.filter_column(name=filter_group)
         util.timer_stop()
 
