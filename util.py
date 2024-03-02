@@ -4,10 +4,12 @@ import bpy
 import bmesh
 import numpy as np
 import time
+from functools import lru_cache
 
 timer = 0
 
 
+@lru_cache(maxsize=None)
 def normalize(
     l,
     max=1,
@@ -16,6 +18,7 @@ def normalize(
     return [i * l_convert for i in l]
 
 
+@lru_cache(maxsize=None)
 def convert_percent(num):
     res = round(num * 100, 1)
     return res

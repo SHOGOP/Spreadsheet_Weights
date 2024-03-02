@@ -7,6 +7,9 @@ from . import util
 import sys
 import logging
 import traceback
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,7 @@ logger.debug(...)
 class Window(QtWidgets.QWidget):
     weight_mode = "REPLACE"
     normalize_mode = False
+    mirror_mode = False
     edit_mode_toggle = False
     hilight_mode = False
     focus_mode = False
@@ -23,7 +27,7 @@ class Window(QtWidgets.QWidget):
     weight_button_clicked = False
     vertex_mirror_flag = False
     show_all_mode = False
-    slider_press = False
+    slider_press = 0
     item_press = False
     select_button_click = False
     multi_change = False
@@ -53,22 +57,21 @@ class Window(QtWidgets.QWidget):
         self.line1.setReadOnly(True)
         self.line1.setFixedSize(100, 25)
         self.layout().addWidget(self.line1, ui_row, 0)
-
-        self.mode_button = []
-        mode_button_value = ["ShowAll", "Hilight:OFF", "Focus:OFF"]
+        ui_row += 1
         # モードボタン配置
+        self.mode_button = []
+        mode_button_value = ["ShowAll", "Hilight", "Focus", "Normalize", "Mirror"]
         self.mode_button_group = QtWidgets.QButtonGroup()
         for i, button in enumerate(mode_button_value):
             self.mode_button.append(QtWidgets.QPushButton(str(button)))
             self.mode_button[i].setCheckable(True)
-            self.layout().addWidget(self.mode_button[i], ui_row, i + 1)
+            self.layout().addWidget(self.mode_button[i], ui_row, i)
             self.mode_button_group.addButton(self.mode_button[i], i)
         # ウェイトボタン生成
-        ui_row = 1
+        ui_row += 1
 
         self.weight_button = []
         weight_button_value = [
-            "AutoNormalize:OFF",
             "0",
             "5",
             "10",
@@ -86,18 +89,18 @@ class Window(QtWidgets.QWidget):
             self.weight_button[i].setDown(False)
             self.layout().addWidget(self.weight_button[i], ui_row, i)
         # スライダー関連
-        ui_row = 2
+        ui_row += 1
         self.line2 = QtWidgets.QLineEdit("0.0")
         self.line2.setFixedSize(50, 25)
 
         self.slider = QtWidgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
-        self.slider.setMaximum(100)
+        self.slider.setMaximum(1000)
 
         self.layout().addWidget(self.line2, ui_row, 0)
         self.layout().addWidget(self.slider, ui_row, 1, 1, len(weight_button_value) - 2)
         # フィルター関連
-        ui_row = 3
+        ui_row += 1
 
         self.select_button = QtWidgets.QPushButton("SELECT")
         self.select_button.setCheckable(True)
@@ -114,7 +117,7 @@ class Window(QtWidgets.QWidget):
             self.group_filter_line, ui_row, 4, 1, len(weight_button_value) - 1
         )
         # テーブル配置
-        ui_row = 4
+        ui_row += 1
         self.layout().addWidget(
             self.tablewidget, ui_row, 0, 2, len(weight_button_value)
         )
@@ -135,9 +138,9 @@ class Window(QtWidgets.QWidget):
         self.select_button.clicked.connect(self.select_button_clicked)
         self.group_filter_line.returnPressed.connect(self.table_filter)
         # テーブル
-        self.tablewidget.itemClicked.connect(self.item_Clicked)
+        # self.tablewidget.itemClicked.connect(self.item_Clicked)
         # self.tablewidget.itemChanged.connect(lambda: print("item_change"))
-        self.tablewidget.itemChanged.connect(self.entered_item)
+        # self.tablewidget.itemChanged.connect(self.entered_item)
         # self.tablewidget.currentCellChanged.connect(lambda: print("currentItemChanged"))
         self.tablewidget.itemSelectionChanged.connect(self.item_select_changed)
         # self.tablewidget.itemEntered.connect(lambda: print("itemEntered"))
@@ -148,7 +151,10 @@ class Window(QtWidgets.QWidget):
 
     def item_Clicked(self, item):
         items = self.tablewidget.selectedItems()
+        item = self.tablewidget.currentItem()
         row_set = []
+        if not item.text() == "---":
+            self.slider_changed(int(float(item.text()) * 10))
         # if self.focus_mode or self.select_button_click:
         if self.focus_mode:
             for idx in items:
@@ -157,18 +163,22 @@ class Window(QtWidgets.QWidget):
 
     def slider_toggle(self, mode=False):
         if mode:
-            self.slider_press = True
+            self.slider_press = 1
         else:
-            self.slider_press = False
+            self.slider_press = 2
+            self.change_weight(mode="Normalize")
 
     def item_select_changed(self):
+        print(f"item_select_changed")
         sender = self.sender()
         try:
             text = sender.text()
         except:
             text = None
         items = self.tablewidget.selectedItems()
-        item = items[0]
+        item = self.tablewidget.currentItem()
+        if not item.text() == "---":
+            self.slider_changed(int(float(item.text()) * 10))
         active_name = self.object_cls.get_vertex_group_index(
             self.tablewidget.horizontalHeaderItem(item.column()).text()
         )
@@ -184,12 +194,10 @@ class Window(QtWidgets.QWidget):
         self.object_cls.vertex_groups.active_index = group_index
 
     def entered_item(self, item):
-        # print("entered_item")
+        print("entered_item")
         if self.weight_button_clicked:
             return
         if self.select_button_click:
-            return
-        if self.slider_press:
             return
         if not self.multi_change:
             return
@@ -204,10 +212,32 @@ class Window(QtWidgets.QWidget):
     def mirror_vertex_group(self):
         window = bpy.context.window_manager.windows[0]
         # obj = bpy.context.object
-        with bpy.context.temp_override(window=window):
-            bpy.ops.object.vertex_group_mirror(
-                mirror_weights=True, flip_group_names=True
+        items = self.tablewidget.selectedItems()
+        group_list = set()
+        for item in items:
+            group_list.add(
+                self.object_cls.get_vertex_group_index(
+                    self.tablewidget.horizontalHeaderItem(item.column()).text()
+                )
             )
+        with bpy.context.temp_override(window=window):
+            for group in group_list:
+                self.change_active_group(group)
+                prev_group = self.object_cls.vertex_groups[group]
+                prev_group_name = self.object_cls.vertex_groups[group].name
+                bpy.ops.object.vertex_group_copy()
+                bpy.ops.object.vertex_group_mirror(
+                    mirror_weights=True, flip_group_names=True
+                )
+                self.object_cls.vertex_groups.remove(prev_group)
+                column = self.object_cls.colcnt - 1
+                self.change_active_group(column)
+                self.object_cls.vertex_groups[column].name = prev_group_name
+                for i in reversed(range(column)):
+                    if i == group:
+                        break
+                    bpy.ops.object.vertex_group_move(direction="UP")
+                self.set_table(self.object_cls)
 
     def select_vertex_release(self):
         window = bpy.context.window_manager.windows[0]
@@ -263,15 +293,12 @@ class Window(QtWidgets.QWidget):
     def clicked_mode_button(self):
         check_id = self.mode_button_group.checkedId()
         buttons = self.mode_button_group.buttons()
-        logger.info("tb: %s", "".join(traceback.format_stack()))
         print("clicked_mode_button")
         object_cls = self.object_cls
         sender = self.sender()
         text = sender.text()
         # self.select_vertex()
-        if text == "Mirror":
-            self.mirror_vertex_group()
-            pass
+
         for i, idx in enumerate(self.mode_button):
             self.mode_button[i].setText(
                 self.mode_button[i].text().replace(":ON", ":OFF")
@@ -280,48 +307,64 @@ class Window(QtWidgets.QWidget):
             # ShowAllを押した場合
             if self.show_all_mode:
                 self.show_all_mode = False
-                buttons[0].setDown(False)
+                self.set_down(buttons[0], False)
             else:
                 self.show_all_mode = True
-                buttons[0].setDown(True)
+                self.set_down(buttons[0], True)
             self.table_filter()
             return
         elif check_id == 1:
             # Hilightを押した場合
             if self.hilight_mode:
                 self.hilight_mode = False
-                buttons[1].setDown(False)
+                self.set_down(buttons[1], False)
                 self.table_filter()
             else:
                 self.hilight_mode = True
-                buttons[1].setDown(True)
+                self.set_down(buttons[1], True)
                 self.focus_mode = False
-                buttons[1].setDown(False)
+                self.set_down(buttons[2], False)
             self.table_filter()
             return
-        self.hilight_mode = False
-        self.focus_mode = False
-        if text == "Hilight:ON":
-            self.hilight_mode = False
-            sender.setDown(False)
-            sender.setText("Hilight:OFF")
+        elif check_id == 2:
+            # Hilightを押した場合
+            if self.focus_mode:
+                self.focus_mode = False
+                self.set_down(buttons[2], False)
+                self.table_filter()
+            else:
+                self.focus_mode = True
+                self.set_down(buttons[2], True)
+                self.hilight_mode = False
+                self.set_down(buttons[1], False)
             self.table_filter()
-        elif text == "Hilight:OFF":
-            self.hilight_mode = True
-            sender.setDown(True)
-            sender.setText("Hilight:ON")
-            self.table_filter()
-        elif text == "Focus:OFF":
-            self.focus_mode = True
-            sender.setDown(True)
-            sender.setText("Focus:ON")
-            self.table_filter()
-        elif text == "Focus:ON":
-            self.focus_mode = False
-            sender.setDown(False)
-            self.select_button_click = True
-            sender.setText("Focus:OFF")
-            self.table_filter()
+            return
+        elif check_id == 3:
+            # Normalizeを押した場合
+            if self.normalize_mode:
+                self.normalize_mode = False
+                self.set_down(buttons[3], False)
+            else:
+                self.normalize_mode = True
+                self.set_down(buttons[3], True)
+            return
+        elif check_id == 4:
+            self.mirror_vertex_group()
+            # Mirrorを押した場合
+            if self.mirror_mode:
+                self.mirror_mode = False
+                self.set_down(buttons[4], False)
+            else:
+                self.mirror_mode = True
+                self.set_down(buttons[4], True)
+            return
+
+    def set_down(self, btn, bool):
+        if bool:
+            s = "background-color: #58c;"
+        else:
+            s = "background-color: #555;"
+        btn.setStyleSheet(s)
 
     def select_table_item(self, item):
         print("Clicked!")
@@ -329,7 +372,7 @@ class Window(QtWidgets.QWidget):
         self.weight_button_clicked = False
 
         if not item.text() == "---":
-            self.slider.setValue(float(item.text()))
+            self.slider.setValue(int(float(item.text()) * 10))
             self.set_slider_text(item.text())
         else:
             self.set_slider_text("---")
@@ -506,7 +549,7 @@ class Window(QtWidgets.QWidget):
             self.set_table(object)
 
     def change_weight(self, *, value=0, mode=None):
-        print("change_weight")
+        # print("change_weight")
         """
         if self.edit_mode_toggle:
             return
@@ -536,6 +579,9 @@ class Window(QtWidgets.QWidget):
                 except KeyError:
                     idx_dic[table_row] = []
                     idx_dic[table_row].append(group_index)
+                    # スライダーで変更になった場合はノーマライズだけ実行
+                if self.slider_press == 2:
+                    continue
                 # UIの行を配列化(配列化しないとvertex_group.addメソッドが使えない)
                 array = []
                 array.append(table_row)
@@ -573,10 +619,12 @@ class Window(QtWidgets.QWidget):
 
                 # UI表の値を設定
                 self.set_table_item(item.row(), item.column(), weight)
-                self.slider.setValue(weight)
+                self.slider.setValue(weight * 10)
             # ノーマライズ
-            if self.normalize_mode:
+            if self.normalize_mode and not self.slider_press == 1:
                 self.normalize_vertex(idx_dic)
+            if self.slider_press == 2:
+                self.slider_press = 0
             if EDIT_MESH_MODE:
                 bpy.ops.object.mode_set(mode="EDIT")
 
@@ -588,15 +636,6 @@ class Window(QtWidgets.QWidget):
         # 「DELTE」ボタンクリック
         if sender.text() == "DELETE":
             self.change_weight(mode="DELETE")
-            return
-        # AutoNormalize ON/OFF
-        if sender.text() == "AutoNormalize:OFF":
-            self.normalize_mode = True
-            sender.setText("AutoNormalize:ON")
-            return
-        if sender.text() == "AutoNormalize:ON":
-            self.normalize_mode = False
-            sender.setText("AutoNormalize:OFF")
             return
         self.change_weight(value=sender.text())
 
@@ -613,6 +652,7 @@ class Window(QtWidgets.QWidget):
         else:
             return -1
 
+    # @lru_cache(maxsize=None)
     def normalize_vertex(self, dic):
         print("normalize_vertex")
         val = 0
@@ -620,26 +660,26 @@ class Window(QtWidgets.QWidget):
         array = [0]
         for row in dic:
             array[0] = row
-            table_row = self.get_table_row(row)
-
             weight_array = self.vertex_weights(row)
             change_weight_value = self.calc_normalize_vertex(weight_array, dic[row])
+            # 頂点グループごとに処理
             for i, idx in enumerate(object_cls.vertex_groups):
                 Vgroup = object_cls.vertex_group(i)
                 if not change_weight_value[i] == -1:
                     Vgroup.add(array, change_weight_value[i], "REPLACE")
                     if Vgroup.name in self.column_item_list():
                         self.set_table_item(
-                            table_row,
+                            row,
                             self.column_item_index(Vgroup.name),
                             util.convert_percent(change_weight_value[i]),
                         )
                 else:
                     if Vgroup.name in self.column_item_list():
                         self.set_table_item(
-                            table_row, self.column_item_index(Vgroup.name), -1
+                            row, self.column_item_index(Vgroup.name), -1
                         )
 
+    # @lru_cache(maxsize=None)
     def calc_normalize_vertex(self, value_array, toggle_array):
         array = value_array.copy()
         max_value = 1
@@ -688,7 +728,7 @@ class Window(QtWidgets.QWidget):
         return weight_array
 
     def set_table_item(self, row, column, val):
-        print("set_table_item")
+        # print("set_table_item")
         if val < 0:
             val = "---"
         item = self.tablewidget.item(row, column)
@@ -700,9 +740,13 @@ class Window(QtWidgets.QWidget):
     def slider_changed(self, value):
         print("slider_changed")
         sender = self.sender()
+        change_value = float(value / 10)
+
         if not self.item_clicked:
-            self.change_weight(value=value, mode="REPLACE")
-        self.set_slider_text(str(value))
+            print("slider_changed_value")
+            self.change_weight(value=change_value, mode="REPLACE")
+        self.set_slider_text(str(change_value))
+        # self.slider.setValue(change_value)
         self.item_clicked = False
 
     def keyPressEvent(self, event):
