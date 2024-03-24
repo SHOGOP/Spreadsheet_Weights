@@ -38,3 +38,21 @@ def timer_stop():
     global timer
     timer = time.time() - timer
     print(f"処理時間：{timer}")
+
+
+def isint(s):  # 整数値を表しているかどうかを判定
+    try:
+        int(s, 10)  # 文字列を実際にint関数で変換してみる
+    except Exception:
+        return False
+    else:
+        return True
+
+
+def isfloat(s):  # 浮動小数点数値を表しているかどうかを判定
+    try:
+        float(s)  # 文字列を実際にfloat関数で変換してみる
+    except Exception:
+        return False
+    else:
+        return True

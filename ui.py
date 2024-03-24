@@ -32,6 +32,7 @@ class Window(QtWidgets.QWidget):
     item_press = False
     select_button_click = False
     multi_change = False
+    weight_filter_mode = False
 
     def __init__(self, parent=None, object_cls=None):
         super().__init__(parent)
@@ -106,17 +107,20 @@ class Window(QtWidgets.QWidget):
         self.select_button = QtWidgets.QPushButton("SELECT")
         self.select_button.setCheckable(True)
         self.filter_label1 = QtWidgets.QLabel("WeightFilter:")
-        self.weight_filter_line = QtWidgets.QLineEdit("----")
-        self.weight_filter_line.setEnabled(False)
+        self.weight_filter_button = QtWidgets.QPushButton("<=")
+        self.weight_filter_button.setCheckable(True)
+        self.weight_filter_line = QtWidgets.QLineEdit("100")
+        # self.weight_filter_line.setEnabled(False)
         self.filter_label2 = QtWidgets.QLabel("GroupFilter:")
         self.group_filter_line = QtWidgets.QLineEdit("")
 
         self.layout().addWidget(self.select_button, ui_row, 0)
         self.layout().addWidget(self.filter_label1, ui_row, 1)
-        self.layout().addWidget(self.weight_filter_line, ui_row, 2)
-        self.layout().addWidget(self.filter_label2, ui_row, 3)
+        self.layout().addWidget(self.weight_filter_button, ui_row, 2)
+        self.layout().addWidget(self.weight_filter_line, ui_row, 3)
+        self.layout().addWidget(self.filter_label2, ui_row, 4)
         self.layout().addWidget(
-            self.group_filter_line, ui_row, 4, 1, len(weight_button_value) - 1
+            self.group_filter_line, ui_row, 5, 1, len(weight_button_value) - 1
         )
         # テーブル配置
         ui_row += 1
@@ -138,6 +142,8 @@ class Window(QtWidgets.QWidget):
         self.slider.sliderReleased.connect(lambda: self.slider_toggle(False))
         # フィルター
         self.select_button.clicked.connect(self.select_button_clicked)
+        self.weight_filter_button.clicked.connect(self.weight_filter_button_clicked)
+        self.weight_filter_line.returnPressed.connect(self.check_weight_filter)
         self.group_filter_line.returnPressed.connect(self.table_filter)
         # テーブル
         # self.tablewidget.itemClicked.connect(self.item_Clicked)
@@ -146,6 +152,26 @@ class Window(QtWidgets.QWidget):
         # self.tablewidget.currentCellChanged.connect(lambda: print("currentItemChanged"))
         self.tablewidget.itemSelectionChanged.connect(self.item_select_changed)
         # self.tablewidget.itemEntered.connect(lambda: print("itemEntered"))
+
+    def weight_filter_button_clicked(self):
+        if self.weight_filter_mode:
+            self.weight_filter_button.setText("<=")
+        else:
+            self.weight_filter_button.setText(">=")
+        self.weight_filter_mode = not self.weight_filter_mode
+        self.table_filter()
+
+    def check_weight_filter(self):
+        sender = self.sender()
+        if util.isfloat(sender.text()):
+            val = float(sender.text())
+            if val > 100:
+                self.weight_filter_line.setText("100")
+            elif val < 0:
+                self.weight_filter_line.setText("0")
+        else:
+            self.weight_filter_line.setText("100")
+        self.table_filter()
 
     def select_button_clicked(self):
         self.select_button_click = True
@@ -255,6 +281,7 @@ class Window(QtWidgets.QWidget):
                 self.object_cls.vertex_groups[column].name = prev_group_name
                 for i in reversed(range(column)):
                     if i == group:
+                        bpy.ops.object.vertex_group_move(direction="UP")
                         break
                     bpy.ops.object.vertex_group_move(direction="UP")
                 self.select_vertex(prev_vertex)
@@ -446,6 +473,7 @@ class Window(QtWidgets.QWidget):
 
     def table_filter(self):
         util.timer_start()
+        print("table_filter")
         object_cls = self.object_cls
         # Row_頂点フィルター(選択しているか判断)
         headder_row = []
@@ -462,6 +490,7 @@ class Window(QtWidgets.QWidget):
         filter_name = self.group_filter_line.text()
         filter_group = self.column_filter_name(filter_name)
         self.filter_column(name=filter_group)
+        filter_weight = float(self.weight_filter_line.text()) / 100
 
         # Row_ウェイトフィルター(頂点)(ウェイトが設定されてない場合)
         del_flag = False
@@ -472,8 +501,13 @@ class Window(QtWidgets.QWidget):
                 if not idx.name in filter_group:
                     continue
                 try:
-                    temp = idx.weight(row)
-                    break
+                    val = idx.weight(row)
+                    if self.weight_filter_mode:
+                        if val >= filter_weight:
+                            break
+                    else:
+                        if val <= filter_weight:
+                            break
                 except RuntimeError:
                     pass
             else:
@@ -486,8 +520,13 @@ class Window(QtWidgets.QWidget):
                 for v in headder_row:
                     try:
                         column = object_cls.get_vertex_group_index(idx)
-                        temp = object_cls.vertex_groups[column].weight(v)
-                        break
+                        val = object_cls.vertex_groups[column].weight(v)
+                        if self.weight_filter_mode:
+                            if val >= filter_weight:
+                                break
+                        else:
+                            if val <= filter_weight:
+                                break
                     except RuntimeError:
                         pass
                 else:
@@ -545,7 +584,7 @@ class Window(QtWidgets.QWidget):
         super(Window, self).show()
 
     def ui_close(self):
-        super(Window, self).close()
+        super(Window, self).destroy()
 
     def get_table_row(self, row_header):
         for i in range(self.object_cls.vertex_count):

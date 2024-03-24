@@ -28,6 +28,9 @@ class StackLogger(logging.Logger):
 
 logging.setLoggerClass(StackLogger)
 
+w = None
+main_window = QtWidgets.QApplication.instance().blender_widget
+
 
 # マウスドラッグでオブジェクトを回転するオペレータ
 class SpreadSheet_OT_Weights(bpy.types.Operator):
@@ -41,10 +44,6 @@ class SpreadSheet_OT_Weights(bpy.types.Operator):
     # マウスが右クリックされている間に、Trueとなる
     __right_mouse_down = False
 
-    main_window = QtWidgets.QApplication.instance().blender_widget
-
-    w = None
-
     # モーダルモード中はTrueを返す
     @classmethod
     def is_running(cls):
@@ -56,17 +55,20 @@ class SpreadSheet_OT_Weights(bpy.types.Operator):
         # エリアを再描画
         if context.area:
             context.area.tag_redraw()
+        if context.active_object == None:
+            object_class = Object_Weight_Table(None)
+            return {"PASS_THROUGH"}
         # print(context.active_object.type)
         if context.active_object.type == "MESH":
             object_class = Object_Weight_Table(context.active_object)
             if context.mode == "EDIT_MESH":
                 context.edit_object.update_from_editmode()
-                self.w.set_edit_mode(True)
+                w.set_edit_mode(True)
             elif context.mode == "OBJECT":
-                self.w.set_edit_mode(False, "OBJECT")
+                w.set_edit_mode(False, "OBJECT")
             else:
-                self.w.set_edit_mode(False)
-            self.w.on_update(object_class)
+                w.set_edit_mode(False)
+            w.on_update(object_class)
 
         # パネル [マウスドラッグでオブジェクトを回転] のボタン [終了] を
         # 押したときに、モーダルモードを終了
@@ -109,22 +111,27 @@ class SpreadSheet_OT_Weights(bpy.types.Operator):
                 # モーダルモードを開始
                 context.window_manager.modal_handler_add(self)
                 op_cls.__running = True
-                print("サンプル 3-1: オブジェクトの回転処理を開始しました。")
+                print("Spreadsheet_Weights: ウィンドウを開きました")
                 return {"RUNNING_MODAL"}
             # [終了] ボタンが押された時の処理
             else:
                 op_cls.__running = False
                 # self.w.ui_close()
-                print("サンプル 3-1: オブジェクトの回転処理を終了しました。")
+                # print(self.w)
+                w.ui_close()
+                print("Spreadsheet_Weights: ウィンドウを閉じました")
                 return {"FINISHED"}
         else:
             return {"CANCELLED"}
 
     def Open_UI(self):
+        global main_window, w
         object_class = Object_Weight_Table(bpy.context.active_object)
-        self.w = Window(self.main_window, object_class)
-        self.w.resize(500, 500)
-        self.w.show()
+        w = Window(main_window, object_class)
+        w.resize(500, 500)
+        w.setWindowTitle("Spread Weights")
+        w.show()
+        # main_window.hide()
 
 
 # UI
