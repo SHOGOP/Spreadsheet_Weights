@@ -1,3 +1,7 @@
+from pip._internal import main as _main
+import importlib
+import bpy
+
 bl_info = {
     "name": "Spreadsheet_Weights",
     "author": "将伍P",
@@ -25,7 +29,18 @@ else:
     from . import util
 
 
-import bpy
+def _import(name, module, ver=None):
+    try:
+        globals()[name] = importlib.import_module(module)
+    except ImportError:
+        try:
+            if ver is None:
+                _main(["install", module])
+            else:
+                _main(["install", "{}=={}".format(module, ver)])
+            globals()[name] = importlib.import_module(module)
+        except:
+            print("can't import: {}".format(module))
 
 
 # メニューを構築する関数
@@ -59,4 +74,5 @@ def unregister():
 
 # メイン処理
 if __name__ == "__main__":
+    _import("Pyside", "Pyside6", "6.6.1")
     register()
