@@ -11,7 +11,7 @@ from . import util
 class Object_Weight_Table(QAbstractTableModel):
     def __init__(self, object, parent=None):
         super().__init__(parent)
-        if object == None:
+        if object != None:
             if object.type == "MESH":
                 self.object = object
                 self.name = object.name
