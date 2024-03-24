@@ -11,31 +11,32 @@ from . import util
 class Object_Weight_Table(QAbstractTableModel):
     def __init__(self, object, parent=None):
         super().__init__(parent)
-        if object.type == "MESH":
-            self.object = object
-            self.name = object.name
-            self.vertex_groups = object.vertex_groups
-            self.vertex = object.data.vertices
-            self.vertex_count = len(object.data.vertices)
-            self.select_vertex = []
-            self.select_vertex_count = 0
-            for idx in object.data.vertices:
-                self.select_vertex.append(idx.select)
-            for idx in self.select_vertex:
-                if idx:
-                    self.select_vertex_count += 1
-            self.colcnt = len(self.vertex_groups)
-            self.rowcnt = len(self.vertex)
-        else:
-            self.object = object
-            self.name = "NULL"
-            self.vertex_groups = None
-            self.vertex = None
-            self.vertex_count = None
-            self.select_vertex = []
-            self.select_vertex_count = 0
-            self.colcnt = 0
-            self.rowcnt = 0
+        if object == None:
+            if object.type == "MESH":
+                self.object = object
+                self.name = object.name
+                self.vertex_groups = object.vertex_groups
+                self.vertex = object.data.vertices
+                self.vertex_count = len(object.data.vertices)
+                self.select_vertex = []
+                self.select_vertex_count = 0
+                for idx in object.data.vertices:
+                    self.select_vertex.append(idx.select)
+                for idx in self.select_vertex:
+                    if idx:
+                        self.select_vertex_count += 1
+                self.colcnt = len(self.vertex_groups)
+                self.rowcnt = len(self.vertex)
+                return
+        self.object = object
+        self.name = "NULL"
+        self.vertex_groups = None
+        self.vertex = None
+        self.vertex_count = None
+        self.select_vertex = []
+        self.select_vertex_count = 0
+        self.colcnt = 0
+        self.rowcnt = 0
 
     # 指定したインデックスの頂点グループを返す
     def vertex_group(self, index):
