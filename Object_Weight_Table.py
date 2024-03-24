@@ -51,6 +51,8 @@ class Object_Weight_Table(QAbstractTableModel):
     # 頂点グループ名の一覧を返す
     def vertex_groups_name(self):
         array = []
+        if self.vertex_groups == None:
+            return array
         for idx in self.vertex_groups:
             array.append(idx.name)
         return array

@@ -28,6 +28,7 @@ class Window(QtWidgets.QWidget):
     vertex_mirror_flag = False
     show_all_mode = False
     slider_press = 0
+    slider_change = False
     item_press = False
     select_button_click = False
     multi_change = False
@@ -105,7 +106,8 @@ class Window(QtWidgets.QWidget):
         self.select_button = QtWidgets.QPushButton("SELECT")
         self.select_button.setCheckable(True)
         self.filter_label1 = QtWidgets.QLabel("WeightFilter:")
-        self.weight_filter_line = QtWidgets.QLineEdit("")
+        self.weight_filter_line = QtWidgets.QLineEdit("----")
+        self.weight_filter_line.setEnabled(False)
         self.filter_label2 = QtWidgets.QLabel("GroupFilter:")
         self.group_filter_line = QtWidgets.QLineEdit("")
 
@@ -211,6 +213,7 @@ class Window(QtWidgets.QWidget):
 
     def mirror_vertex_group(self):
         window = bpy.context.window_manager.windows[0]
+        PAINT_WEIGHT_FLG = False
         # obj = bpy.context.object
         items = self.tablewidget.selectedItems()
         group_list = set()
@@ -225,10 +228,27 @@ class Window(QtWidgets.QWidget):
                 self.change_active_group(group)
                 prev_group = self.object_cls.vertex_groups[group]
                 prev_group_name = self.object_cls.vertex_groups[group].name
+
+                # if bpy.context.mode == "OBJECT":
+                # return
+                if bpy.context.mode == "PAINT_WEIGHT":
+                    PAINT_WEIGHT_FLG = True
+                # 現在アクティブなオブジェクトを取得
+                obj = bpy.context.active_object
                 bpy.ops.object.vertex_group_copy()
+                self.change_active_group(group)
+                # 編集モードに切り替え
+                bpy.ops.object.mode_set(mode="EDIT")
+                prev_vertex = []
+                for i, idx in enumerate(obj.data.vertices):
+                    if idx.select:
+                        prev_vertex.append(i)
+                print(prev_vertex)
+                bpy.ops.mesh.select_all(action="SELECT")  # 頂点を全選択
                 bpy.ops.object.vertex_group_mirror(
                     mirror_weights=True, flip_group_names=True
                 )
+
                 self.object_cls.vertex_groups.remove(prev_group)
                 column = self.object_cls.colcnt - 1
                 self.change_active_group(column)
@@ -237,6 +257,13 @@ class Window(QtWidgets.QWidget):
                     if i == group:
                         break
                     bpy.ops.object.vertex_group_move(direction="UP")
+                self.select_vertex(prev_vertex)
+                # ビューポートを更新するために一時的にオブジェクトモードに切り替える
+                bpy.ops.object.mode_set(mode="OBJECT")
+                if PAINT_WEIGHT_FLG:
+                    bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                else:
+                    bpy.ops.object.mode_set(mode="EDIT")
                 self.set_table(self.object_cls)
 
     def select_vertex_release(self):
@@ -349,7 +376,7 @@ class Window(QtWidgets.QWidget):
                 self.set_down(buttons[3], True)
             return
         elif check_id == 4:
-            self.mirror_vertex_group()
+            # self.mirror_vertex_group()
             # Mirrorを押した場合
             if self.mirror_mode:
                 self.mirror_mode = False
@@ -388,8 +415,9 @@ class Window(QtWidgets.QWidget):
         self.line1.setText(object_cls.name)
         self.tablewidget.setColumnCount(object_cls.colcnt)
         self.tablewidget.setRowCount(object_cls.rowcnt)
-        if object_cls.object == None:
+        if object_cls.object == None or object_cls.vertex_groups == None:
             return
+
         Vgroups_name = object_cls.vertex_groups_name()
         self.tablewidget.setHorizontalHeaderLabels(Vgroups_name)
 
@@ -623,6 +651,8 @@ class Window(QtWidgets.QWidget):
             # ノーマライズ
             if self.normalize_mode and not self.slider_press == 1:
                 self.normalize_vertex(idx_dic)
+            if self.mirror_mode and not self.slider_press == 1:
+                self.mirror_vertex_group()
             if self.slider_press == 2:
                 self.slider_press = 0
             if EDIT_MESH_MODE:
@@ -739,15 +769,19 @@ class Window(QtWidgets.QWidget):
 
     def slider_changed(self, value):
         print("slider_changed")
+        """if self.slider_change:
+            self.slider_change = False
+            return"""
         sender = self.sender()
         change_value = float(value / 10)
-
-        if not self.item_clicked:
+        print(self.slider_press)
+        if not self.item_clicked and self.slider_press == 1:
             print("slider_changed_value")
             self.change_weight(value=change_value, mode="REPLACE")
         self.set_slider_text(str(change_value))
-        # self.slider.setValue(change_value)
+        self.slider.setValue(change_value * 10)
         self.item_clicked = False
+        # self.slider_change = True
 
     def keyPressEvent(self, event):
         print("keyPressEvent")
