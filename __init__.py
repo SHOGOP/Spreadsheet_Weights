@@ -1,6 +1,6 @@
 from pip._internal import main as _main
 import importlib
-import bpy
+
 
 bl_info = {
     "name": "Spreadsheet_Weights",
@@ -27,6 +27,8 @@ else:
     from . import main
     from . import Object_Weight_Table
     from . import util
+
+import bpy
 
 
 def _import(name, module, ver=None):
