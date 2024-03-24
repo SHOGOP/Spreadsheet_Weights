@@ -6,7 +6,7 @@ bl_info = {
     "location": "3Dビューポート > Sidebar > Spreadsheet_Weights",
     "description": "スプレッドシート形式でウェイトを設定する",
     "warning": "",
-    "support": "TESTING",
+    "support": "COMMUNITY",
     "doc_url": "",
     "tracker_url": "",
     "category": "Object",
