@@ -27,3 +27,4 @@
 2.Spreadsheet_WeightsをBlenderのアドオンに追加する。
 
 ## Usage
+![UI_desc](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/17b4d093-174a-4892-bcc6-26aed2125855)
