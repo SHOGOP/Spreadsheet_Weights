@@ -38,17 +38,17 @@
 ![mode_change](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/7b2a0d61-d18d-458d-b83e-cad503aec38e)
 ## ②ウェイト設定
 - `0~100`
-`左クリック`:クリックしたボタンのウェイトを設定　　
-`Ctrl+左クリック`:クリックしたボタンのウェイトを加算　　
-`Shift+左クリック`:クリックしたボタンのウェイトを減算　　
+`左クリック`:クリックしたボタンのウェイトを設定  
+`Ctrl+左クリック`:クリックしたボタンのウェイトを加算  
+`Shift+左クリック`:クリックしたボタンのウェイトを減算  
 - `DELETE`:選択した頂点から頂点グループを削除
 ![weight_button](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/c6969adf-e431-41d9-a891-5b0765fa9ee7)
 ## ③スライダー
 ![slider](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/6975c7cc-e6cd-4913-88c9-d43827b5763b)
 ## ④フィルター
 - `SELECT`:選択中のセルの頂点を選択
-- `WeightFilter`:入力した値でウェイトにフィルターをかける`<=`をクリックすることで切り替えが出来る
-`<=`:入力した値より低い値を表示する
-`>=`:入力した値より高い値を表示する
+- `WeightFilter`:入力した値でウェイトにフィルターをかける`<=`をクリックすることで切り替えが出来る  
+`<=`:入力した値より低い値を表示する  
+`>=`:入力した値より高い値を表示する  
 - `GroupFilter`:入力した文字列を含む頂点グループを表示する(,で複数ワードを入力)
 ![filter](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/03d493aa-cd8f-42f5-a7c5-7232b596db8f)
