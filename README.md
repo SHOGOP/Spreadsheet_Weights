@@ -1,7 +1,8 @@
 # Spreadsheet_Weights
 
 ウェイトをスプレッドシート表示で調整するアドオン
-![demo](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/88b32231-1016-4559-93f9-56da916cd0ef)
+![demo](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/6b455b89-b406-4400-8b08-ad224227df64)
+
 
 
 ## Requirements
