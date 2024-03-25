@@ -28,4 +28,4 @@
 
 ## Usage
 ![UI_desc](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/17b4d093-174a-4892-bcc6-26aed2125855)
-![weight_button](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/e0a3b324-09e0-4eb2-bb6c-5fb141f7814b)
+![weight_button](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/61283481-abe0-4ec3-bfab-63705883ba47)
