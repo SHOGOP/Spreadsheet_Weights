@@ -128,7 +128,7 @@ class SpreadSheet_OT_Weights(bpy.types.Operator):
         global main_window, w
         object_class = Object_Weight_Table(bpy.context.active_object)
         w = Window(main_window, object_class)
-        w.resize(500, 500)
+        w.resize(600, 600)
         w.setWindowTitle("Spread Weights")
         w.show()
         # main_window.hide()

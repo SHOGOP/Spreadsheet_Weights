@@ -57,7 +57,7 @@ class Window(QtWidgets.QWidget):
         ui_row = 0
         self.line1 = QtWidgets.QLineEdit("object")
         self.line1.setReadOnly(True)
-        self.line1.setFixedSize(100, 25)
+        self.line1.setFixedSize(80, 25)
         self.layout().addWidget(self.line1, ui_row, 0)
         ui_row += 1
         # モードボタン配置
@@ -67,6 +67,7 @@ class Window(QtWidgets.QWidget):
         for i, button in enumerate(mode_button_value):
             self.mode_button.append(QtWidgets.QPushButton(str(button)))
             self.mode_button[i].setCheckable(True)
+            self.mode_button[i].setFixedSize(80, 25)
             self.layout().addWidget(self.mode_button[i], ui_row, i)
             self.mode_button_group.addButton(self.mode_button[i], i)
         # ウェイトボタン生成
@@ -84,33 +85,40 @@ class Window(QtWidgets.QWidget):
             "100",
             "DELETE",
         ]
+        debuff = 0
         # ウェイトボタン配置
         for i, button in enumerate(weight_button_value):
+            if i == 5:
+                ui_row += 1
+                debuff = 5
             self.weight_button.append(QtWidgets.QPushButton(str(button)))
             self.weight_button[i].setCheckable(True)
             self.weight_button[i].setDown(False)
-            self.layout().addWidget(self.weight_button[i], ui_row, i)
+            self.weight_button[i].setFixedSize(80, 25)
+            self.layout().addWidget(self.weight_button[i], ui_row, i - debuff)
+
         # スライダー関連
         ui_row += 1
         self.line2 = QtWidgets.QLineEdit("0.0")
-        self.line2.setFixedSize(50, 25)
+        self.line2.setFixedSize(80, 25)
 
         self.slider = QtWidgets.QSlider(Qt.Horizontal)
         self.slider.setMinimum(0)
         self.slider.setMaximum(1000)
 
         self.layout().addWidget(self.line2, ui_row, 0)
-        self.layout().addWidget(self.slider, ui_row, 1, 1, len(weight_button_value) - 2)
+        self.layout().addWidget(self.slider, ui_row, 1, 1, 3)
         # フィルター関連
         ui_row += 1
 
         self.select_button = QtWidgets.QPushButton("SELECT")
         self.select_button.setCheckable(True)
+        self.select_button.setFixedSize(80, 25)
         self.filter_label1 = QtWidgets.QLabel("WeightFilter:")
         self.weight_filter_button = QtWidgets.QPushButton("<=")
         self.weight_filter_button.setCheckable(True)
         self.weight_filter_line = QtWidgets.QLineEdit("100")
-        # self.weight_filter_line.setEnabled(False)
+        self.weight_filter_line.setFixedSize(80, 25)
         self.filter_label2 = QtWidgets.QLabel("GroupFilter:")
         self.group_filter_line = QtWidgets.QLineEdit("")
 
@@ -119,9 +127,7 @@ class Window(QtWidgets.QWidget):
         self.layout().addWidget(self.weight_filter_button, ui_row, 2)
         self.layout().addWidget(self.weight_filter_line, ui_row, 3)
         self.layout().addWidget(self.filter_label2, ui_row, 4)
-        self.layout().addWidget(
-            self.group_filter_line, ui_row, 5, 1, len(weight_button_value) - 1
-        )
+        self.layout().addWidget(self.group_filter_line, ui_row, 5)
         # テーブル配置
         ui_row += 1
         self.layout().addWidget(
@@ -856,21 +862,21 @@ class Window(QtWidgets.QWidget):
         if state == "pressed":
             self.weight_mode = "ADD"
             for i, button in enumerate(self.weight_button):
-                button.setText("+" + button.text())
+                button.setText("+" + button.text().replace("+", "").replace("-", ""))
         if state == "released":
             self.weight_mode = "REPLACE"
             for i, button in enumerate(self.weight_button):
-                button.setText(button.text()[1:])
+                button.setText(button.text().replace("+", ""))
 
     def ShiftKeyAction(self, state):
         if state == "pressed":
             self.weight_mode = "SUBTRACT"
             for i, button in enumerate(self.weight_button):
-                button.setText("-" + button.text())
+                button.setText("-" + button.text().replace("+", "").replace("-", ""))
         if state == "released":
             self.weight_mode = "REPLACE"
             for i, button in enumerate(self.weight_button):
-                button.setText(button.text()[1:])
+                button.setText(button.text().replace("-", ""))
 
     def set_edit_mode(self, bool, mode=None):
         self.edit_mode_toggle = bool
