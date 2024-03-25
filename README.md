@@ -10,7 +10,7 @@
 
 # Installation
 
-1.BQtのインストールとアドオンを導入する[Bqt](https://github.com/techartorg/bqt/tree/master)
+1.BQtのインストールとアドオンを導入する[Bqt](https://github.com/techartorg/bqt/tree/master)\n
 インストール方法は[installation docs](https://github.com/techartorg/bqt/wiki/Installation)に解説されているが、こちらでも手順を解説します。
 - コマンドプロンプトを管理者権限で起動し、{バージョン}を使用するBlederのバージョンに書き換えて実行
 ```bash
