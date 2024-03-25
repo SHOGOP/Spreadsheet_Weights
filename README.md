@@ -1,8 +1,6 @@
-# Name（リポジトリ/プロジェクト/OSSなどの名前）
+# Spreadsheet_Weights
 
-分かりやすくてカッコイイ名前をつける（今回は"hoge"という名前をつける）
-
-"hoge"が何かを簡潔に紹介する
+ウェイトをスプレッドシート表示で調整するアドオン
 
 # DEMO
 
@@ -12,20 +10,22 @@
 
 "hoge"のセールスポイントや差別化などを説明する
 
-# Requirement
-
-"hoge"を動かすのに必要なライブラリなどを列挙する
-
-* huga 3.5.2
-* hogehuga 1.0.2
+## Requirements
+- Blender `3.0.0`or higher.
+- Windows (Macは動作未確認)
+- BQt
 
 # Installation
 
-Requirementで列挙したライブラリなどのインストール方法を説明する
+1.BQtのインストールとアドオンを導入する[Bqt](https://github.com/techartorg/bqt/tree/master)
+インストール方法は[installation docs](https://github.com/techartorg/bqt/wiki/Installation)に解説されているが、こちらでも手順を解説します。
+- コマンドプロンプトを管理者権限で起動し、["C:\Program Files\Blender Foundation\Blender {Blenderのバージョン}\{Blenderのバージョン}\python\bin\python.exe" -m pip install git+https://github.com/techartorg/bqt.git]を実行
+- [Bqt](https://github.com/techartorg/bqt/tree/master)からCodeを「Download ZIP」でダウンロードし、
+ファイルを解凍したら「bqt-master/bqt」からZIP形式のファイルを作成する。
+- Blenderを起動し、'編集>プリファレンス>アドオン>インストール'で作成した「bqt.zip」をインストールし、アドオンを有効化する。
+- Blenderを再起動し、画面上に「Blender Qt」というウィンドウが表示されていればインストール完了。
 
-```bash
-pip install huga_package
-```
+2.Spreadsheet_WeightsをBlenderのアドオンに追加する。
 
 # Usage
 
