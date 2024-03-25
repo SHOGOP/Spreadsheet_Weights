@@ -27,6 +27,17 @@
 2.Spreadsheet_WeightsをBlenderのアドオンに追加する。
 
 ## Usage
-![UI_desc](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/17b4d093-174a-4892-bcc6-26aed2125855)
+###各種説明
+![UI_desc_num](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/adcc152d-f19f-4c42-9b57-dc0284911a53)
+###①モード
+- `ShowAll`ウェイトが設定されてない頂点を表示するようにする
+- `Hilight`選択した頂点のみテーブルに表示する
+- `Focus`テーブルで選択した頂点を選択する
+- `Normalize`ウェイトを編集した後に自動でノーマライズする
+- `Mirror`ウェイトを編集した後に自動でミラーする
+![mode_change](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/7b2a0d61-d18d-458d-b83e-cad503aec38e)
+
 ![weight_button](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/c6969adf-e431-41d9-a891-5b0765fa9ee7)
-![mode_change](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/c439b5d0-a303-4f16-8ab8-5014eea52e59)
+
+![filter](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/03d493aa-cd8f-42f5-a7c5-7232b596db8f)
+![slider](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/6975c7cc-e6cd-4913-88c9-d43827b5763b)
