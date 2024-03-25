@@ -5,12 +5,12 @@
 
 
 
-## Requirements
+# Requirements
 - Blender `3.0.0`or higher.
 - Windows (Macは動作未確認)
 - BQt
 
-## Installation
+# Installation
 
 1.BQtのインストールとアドオンを導入する[Bqt](https://github.com/techartorg/bqt/tree/master)  
 インストール方法は[installation docs](https://github.com/techartorg/bqt/wiki/Installation)に解説されているが、こちらでも手順を解説します。
@@ -26,18 +26,29 @@
 
 2.Spreadsheet_WeightsをBlenderのアドオンに追加する。
 
-## Usage
-###各種説明
-![UI_desc_num](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/adcc152d-f19f-4c42-9b57-dc0284911a53)
-###①モード
-- `ShowAll`ウェイトが設定されてない頂点を表示するようにする
-- `Hilight`選択した頂点のみテーブルに表示する
-- `Focus`テーブルで選択した頂点を選択する
-- `Normalize`ウェイトを編集した後に自動でノーマライズする
-- `Mirror`ウェイトを編集した後に自動でミラーする
+# Usage
+## 各種説明
+![UI_desc_num](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/adcc152d-f19f-4c42-9b57-dc0284911a53)  
+## ①モード切り替え
+- `ShowAll`:ウェイトが設定されてない頂点を表示するようにする
+- `Hilight`:選択した頂点のみテーブルに表示する
+- `Focus`:選択中のセルの頂点を選択する
+- `Normalize`:ウェイトを編集した後に自動でノーマライズする
+- `Mirror`:ウェイトを編集した後に自動でミラーする
 ![mode_change](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/7b2a0d61-d18d-458d-b83e-cad503aec38e)
-
+## ②ウェイト設定
+- `0~100`
+`左クリック`:クリックしたボタンのウェイトを設定　　
+`Ctrl+左クリック`:クリックしたボタンのウェイトを加算　　
+`Shift+左クリック`:クリックしたボタンのウェイトを減算　　
+- `DELETE`:選択した頂点から頂点グループを削除
 ![weight_button](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/c6969adf-e431-41d9-a891-5b0765fa9ee7)
-
-![filter](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/03d493aa-cd8f-42f5-a7c5-7232b596db8f)
+## ③スライダー
 ![slider](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/6975c7cc-e6cd-4913-88c9-d43827b5763b)
+## ④フィルター
+- `SELECT`:選択中のセルの頂点を選択
+- `WeightFilter`:入力した値でウェイトにフィルターをかける`<=`をクリックすることで切り替えが出来る
+`<=`:入力した値より低い値を表示する
+`>=`:入力した値より高い値を表示する
+- `GroupFilter`:入力した文字列を含む頂点グループを表示する(,で複数ワードを入力)
+![filter](https://github.com/SHOGOP/Spreadsheet_Weights/assets/122035414/03d493aa-cd8f-42f5-a7c5-7232b596db8f)
